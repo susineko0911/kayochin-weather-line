@@ -61,15 +61,20 @@ def fetch_weather() -> dict:
                 "wind_speed_10m_max",
             ]
         ),
+        "current": "weather_code,temperature_2m,apparent_temperature,precipitation",
         "timezone": "Asia/Tokyo",
         "forecast_days": 1,
     }
     response = requests.get(FORECAST_URL, params=params, timeout=30)
     response.raise_for_status()
-    daily = response.json()["daily"]
-    return {key: values[0] for key, values in daily.items() if key != "time"} | {
-        "date": daily["time"][0]
-    }
+    payload = response.json()
+    daily = payload["daily"]
+    current = payload.get("current", {})
+    return (
+        {key: values[0] for key, values in daily.items() if key != "time"}
+        | {"date": daily["time"][0]}
+        | {f"current_{key}": value for key, value in current.items() if key != "time"}
+    )
 
 
 def outfit_key(weather: dict) -> str:
@@ -132,24 +137,29 @@ def base_image(outfit: Path | None) -> Image.Image:
     return image
 
 
+def current_weather_summary(weather: dict) -> tuple[str, int, int]:
+    code = int(weather.get("current_weather_code", weather["weather_code"]))
+    temperature = round(float(weather.get("current_temperature_2m", weather["temperature_2m_max"])))
+    apparent = round(float(weather.get("current_apparent_temperature", weather["apparent_temperature_max"])))
+    return WEATHER_LABELS.get(code, "天気情報"), temperature, apparent
+
+
 def create_card(weather: dict, outfit: Path | None, output: Path) -> None:
     image = base_image(outfit).convert("RGBA")
     overlay = Image.new("RGBA", image.size, (0, 0, 0, 0))
     draw = ImageDraw.Draw(overlay)
-    draw.rounded_rectangle((55, 780, 1145, 1140), radius=42, fill=(255, 255, 255, 225))
-    draw.rounded_rectangle((55, 55, 590, 155), radius=30, fill=(255, 255, 255, 220))
+    draw.rounded_rectangle((55, 720, 1145, 1140), radius=42, fill=(255, 255, 255, 225))
 
-    code = int(weather["weather_code"])
     high = round(float(weather["temperature_2m_max"]))
     low = round(float(weather["temperature_2m_min"]))
-    feels = round(float(weather["apparent_temperature_max"]))
+    current_label, current_temperature, current_apparent = current_weather_summary(weather)
     rain = round(float(weather["precipitation_probability_max"] or 0))
     display_date = date.fromisoformat(weather["date"])
 
-    draw.text((85, 105), f"{display_date.month}月{display_date.day}日  {LOCATION}", font=font(35, True), fill="#263238", anchor="lm")
-    draw.text((100, 845), WEATHER_LABELS.get(code, "天気情報"), font=font(78, True), fill="#263238")
-    draw.text((100, 950), f"最高 {high}℃   最低 {low}℃", font=font(55, True), fill="#263238")
-    draw.text((100, 1035), f"体感 {feels}℃   降水確率 {rain}%", font=font(46), fill="#40515a")
+    draw.text((100, 770), f"{display_date.month}月{display_date.day}日  {LOCATION}", font=font(35, True), fill="#40515a")
+    draw.text((100, 830), f"現在  {current_label}  {current_temperature}℃", font=font(68, True), fill="#263238")
+    draw.text((100, 935), f"最高 {high}℃   最低 {low}℃", font=font(52, True), fill="#263238")
+    draw.text((100, 1020), f"現在の体感 {current_apparent}℃   降水確率 {rain}%", font=font(42), fill="#40515a")
     draw.text((1100, 1110), "Weather: Open-Meteo.com", font=font(24), fill="#607d8b", anchor="rs")
 
     output.parent.mkdir(parents=True, exist_ok=True)

@@ -3,7 +3,9 @@ param(
     [string]$ImageUrl,
 
     [Parameter(Mandatory = $true, ParameterSetName = "Text")]
-    [string]$Text
+    [string]$Text,
+
+    [switch]$Force
 )
 
 $ErrorActionPreference = "Stop"
@@ -21,7 +23,7 @@ if ($PSCmdlet.ParameterSetName -eq "Image") {
     $imageKey = [IO.Path]::GetFileNameWithoutExtension(([Uri]$ImageUrl).AbsolutePath)
     if (Test-Path -LiteralPath $lastImageSendPath) {
         $lastImageSend = (Get-Content -LiteralPath $lastImageSendPath -Raw).Trim()
-        if ($lastImageSend -eq $imageKey) {
+        if (-not $Force -and $lastImageSend -eq $imageKey) {
             Write-Host "LINE image for $imageKey was already sent. Skipping duplicate."
             return
         }
