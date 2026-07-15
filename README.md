@@ -1,6 +1,6 @@
 # かよちん天気画像 LINE 自動送信
 
-毎朝 5:30（日本時間）に西東京市の天気を取得し、気温・雨に合う服装画像へ天気を合成して、LINEへ送ります。
+毎朝 5:15（日本時間）にローカルのCodex自動実行で西東京市の天気を取得し、テンプレ画像を参照して服装画像を生成します。天気情報を合成し、GitHubの公開URLを経由してLINEへ送ります。
 
 ## 服装ルールを変更する
 
@@ -20,7 +20,7 @@ python outfit_prompt.py
 python outfit_prompt.py --plan-json
 ```
 
-毎朝のCodex画像生成では `python outfit_prompt.py` の結果を画像生成指示として使い、生成画像を `weather_card.py --outfit <画像パス>` に渡します。
+毎朝のCodex画像生成では `python outfit_prompt.py` の結果と基準画像を画像生成へ渡し、生成画像を `weather_card.py --outfit <画像パス>` に渡します。
 
 ## かよちんの見た目を固定する
 
@@ -33,7 +33,8 @@ python outfit_prompt.py --plan-json
 ## 費用
 
 - 天気: Open-Meteo（個人・非商用、APIキー不要）
-- 定時実行と画像公開: GitHub Actions / `raw.githubusercontent.com`
+- 定時実行: Codexのローカル自動実行（画像生成枠を使用）
+- 画像公開: GitHub / `raw.githubusercontent.com`
 - LINE: LINE公式アカウントのコミュニケーションプラン（月200通まで0円）
 
 1人へ1日1回なら、通常は月28〜31通です。
@@ -41,14 +42,12 @@ python outfit_prompt.py --plan-json
 ## 初回設定
 
 1. `assets/outfits/` に服装画像を追加します。命名規則は同フォルダの README を参照してください。
-2. このフォルダの中身を、新しい **公開GitHubリポジトリ** の直下へ置きます。
+2. このフォルダの公開可能なファイルを、公開GitHubリポジトリへ置きます。基準画像と秘密情報はアップロードしません。
 3. LINE公式アカウントを作り、Official Account Managerで Messaging API を有効にします。
 4. その公式アカウントを、自分のLINEで友だち追加します。
-5. LINE Developersのチャネルから長期のチャネルアクセストークンを発行します。
-6. GitHubリポジトリの `Settings > Secrets and variables > Actions` に次を登録します。
-   - `LINE_CHANNEL_ACCESS_TOKEN`: 手順5のトークン
-   - `LINE_TO`: 送信先のLINEユーザーID（`U`から始まる値）
-7. GitHubの `Actions` で「かよちん天気画像を送信」を開き、`Run workflow` で試します。
+5. LINE Developersのチャネルからチャネルアクセストークンを発行します。
+6. `setup_line_secrets.ps1` を実行し、アクセストークンとユーザーIDをWindowsユーザー専用に暗号化保存します。
+7. Codexの毎朝5:15自動実行を有効にします。
 
 アクセストークンはファイルに直接書かないでください。
 
@@ -63,7 +62,7 @@ python weather_card.py
 
 ## 補足
 
-- GitHubの予約実行は混雑時に数分遅れる場合があります。
+- ローカル自動実行には、このWindows環境とCodexが利用できる状態である必要があります。
 - LINEの画像メッセージ仕様上、画像はLINE側が取得できるHTTPS URLに置く必要があります。
 - 公開リポジトリを使うため、服装画像と生成画像はURLを知っている人から閲覧可能です。
 - 過去画像を残したくない場合は、定期削除処理を追加できます。
