@@ -1,0 +1,4 @@
+__pycache__/
+.env
+public/*.png
+!public/.gitkeep

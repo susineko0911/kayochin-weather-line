@@ -1,0 +1,57 @@
+name: かよちん天気画像を送信
+
+on:
+  schedule:
+    # GitHub Actions の cron は UTC。20:30 UTC = 翌日 05:30 JST。
+    - cron: "30 20 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-kayochin-weather
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: 日本語フォントを用意
+        run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk
+
+      - name: Python依存関係を用意
+        run: pip install -r requirements.txt
+
+      - name: 今日の画像を生成
+        id: card
+        shell: bash
+        run: |
+          image_path="$(python weather_card.py)"
+          echo "path=$image_path" >> "$GITHUB_OUTPUT"
+          echo "date=$(basename "$image_path" .png)" >> "$GITHUB_OUTPUT"
+
+      - name: 生成画像を公開ブランチへ保存
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -f "${{ steps.card.outputs.path }}"
+          git commit -m "weather: ${{ steps.card.outputs.date }}" || exit 0
+          git push
+
+      - name: LINEへ画像を送信
+        env:
+          LINE_CHANNEL_ACCESS_TOKEN: ${{ secrets.LINE_CHANNEL_ACCESS_TOKEN }}
+          LINE_TO: ${{ secrets.LINE_TO }}
+        shell: bash
+        run: |
+          image_url="https://raw.githubusercontent.com/${GITHUB_REPOSITORY}/${GITHUB_REF_NAME}/${{ steps.card.outputs.path }}"
+          python send_line.py "$image_url"
