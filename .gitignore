@@ -4,3 +4,5 @@ public/*.png
 !public/.gitkeep
 assets/reference/*
 !assets/reference/README.md
+assets/generated/
+.secrets/
