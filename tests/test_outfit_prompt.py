@@ -48,8 +48,14 @@ class OutfitPlanTests(unittest.TestCase):
     def test_prompt_requires_identity_reference(self) -> None:
         prompt = make_prompt(CONFIG, weather("2026-04-10", 21))
         self.assertIn(str(Path("assets/reference/kayochin_reference.png")), prompt)
-        self.assertIn("顔立ち、髪型、髪色、目の色を保つ", prompt)
-        self.assertIn("服装、持ち物、背景だけ", prompt)
+        self.assertIn("参照画像と同じ顔立ち", prompt)
+        self.assertIn("服装、手に持つ小物、背景だけ", prompt)
+
+    def test_prompt_contains_template_specific_identity_traits(self) -> None:
+        prompt = make_prompt(CONFIG, weather("2026-04-10", 21))
+        self.assertIn("濃い茶色のツインテール", prompt)
+        self.assertIn("赤い髪リボン", prompt)
+        self.assertIn("暖かい茶色の瞳", prompt)
 
     def test_reference_path_is_relative_to_config(self) -> None:
         config_path = ROOT / "outfit_config.json"
