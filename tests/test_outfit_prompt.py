@@ -4,7 +4,7 @@ import json
 import unittest
 from pathlib import Path
 
-from outfit_prompt import make_plan, make_prompt
+from outfit_prompt import make_plan, make_prompt, resolve_reference_path
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,9 +47,14 @@ class OutfitPlanTests(unittest.TestCase):
 
     def test_prompt_requires_identity_reference(self) -> None:
         prompt = make_prompt(CONFIG, weather("2026-04-10", 21))
-        self.assertIn("assets/reference/kayochin_reference.png", prompt)
+        self.assertIn(str(Path("assets/reference/kayochin_reference.png")), prompt)
         self.assertIn("顔立ち、髪型、髪色、目の色を保つ", prompt)
         self.assertIn("服装、持ち物、背景だけ", prompt)
+
+    def test_reference_path_is_relative_to_config(self) -> None:
+        config_path = ROOT / "outfit_config.json"
+        resolved = resolve_reference_path(config_path, "assets/reference/kayochin_reference.png")
+        self.assertEqual(resolved, ROOT / "assets/reference/kayochin_reference.png")
 
 
 if __name__ == "__main__":

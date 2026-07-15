@@ -28,7 +28,7 @@ python outfit_prompt.py --plan-json
 
 `assets/reference/kayochin_reference.png`
 
-この画像はGitの対象外なので、公開リポジトリへは送られません。画像生成時は基準画像を参照し、顔立ち・髪型・髪色・目の色を維持して、服装・持ち物・背景だけを変更します。詳しくは [`assets/reference/README.md`](assets/reference/README.md) を参照してください。
+この画像はGitの対象外なので、公開リポジトリへは送られません。画像生成時は基準画像を `referenced_image_paths` の入力画像として実際に添付し、顔立ち・髪型・髪色・目の色を維持して、服装・持ち物・背景だけを変更します。基準画像がない場合、画像生成用プロンプト作成はエラーで停止します。詳しくは [`assets/reference/README.md`](assets/reference/README.md) を参照してください。
 
 ## 費用
 

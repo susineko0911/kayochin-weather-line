@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from datetime import date
 from pathlib import Path
 
@@ -16,6 +15,13 @@ SNOW_CODES = set(range(71, 78)) | {85, 86}
 def load_config(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as source:
         return json.load(source)
+
+
+def resolve_reference_path(config_path: Path, reference_value: str) -> Path:
+    reference_path = Path(reference_value)
+    if reference_path.is_absolute():
+        return reference_path
+    return config_path.resolve().parent / reference_path
 
 
 def month_day(value: str) -> tuple[int, int]:
@@ -93,9 +99,10 @@ def make_plan(config: dict, weather: dict) -> dict:
     }
 
 
-def make_prompt(config: dict, weather: dict) -> str:
+def make_prompt(config: dict, weather: dict, reference_path: Path | None = None) -> str:
     plan = make_plan(config, weather)
     character = config["character"]
+    reference_path = reference_path or Path(character["reference_image"])
     identity_rules = "。".join(character.get("identity_rules", []))
     code = int(weather["weather_code"])
     additions = "。".join(plan["weather_additions"]) or "特別な天候小物は不要"
@@ -106,7 +113,7 @@ def make_prompt(config: dict, weather: dict) -> str:
             "Use case: illustration-story",
             "Asset type: 毎朝LINEで送る天気カードの人物背景画像",
             f"Primary request: {character['name']}が今日の天気に合う服装で出かける1枚絵",
-            f"Input images: {character['reference_image']} を人物同一性の基準画像として使用",
+            f"Input images: {reference_path} を人物同一性の基準画像として実際に添付して使用",
             f"Subject: {character['appearance']}",
             f"Identity preservation: {identity_rules}",
             f"Style/medium: {character['image_style']}",
@@ -128,12 +135,9 @@ def main() -> None:
     parser.add_argument("--plan-json", action="store_true")
     args = parser.parse_args()
     config = load_config(args.config)
-    reference_path = Path(config["character"]["reference_image"])
-    if not reference_path.exists():
-        print(
-            f"注意: 基準画像がありません: {reference_path}。画像生成前に配置してください。",
-            file=sys.stderr,
-        )
+    reference_path = resolve_reference_path(args.config, config["character"]["reference_image"])
+    if not args.plan_json and not reference_path.exists():
+        parser.error(f"基準画像がありません: {reference_path}。画像生成前に配置してください。")
     if args.weather_json:
         with args.weather_json.open("r", encoding="utf-8") as source:
             weather = json.load(source)
@@ -142,7 +146,7 @@ def main() -> None:
     if args.plan_json:
         print(json.dumps(make_plan(config, weather), ensure_ascii=False, indent=2))
     else:
-        print(make_prompt(config, weather))
+        print(make_prompt(config, weather, reference_path))
 
 
 if __name__ == "__main__":
