@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from datetime import date
 from pathlib import Path
 
@@ -95,6 +96,7 @@ def make_plan(config: dict, weather: dict) -> dict:
 def make_prompt(config: dict, weather: dict) -> str:
     plan = make_plan(config, weather)
     character = config["character"]
+    identity_rules = "。".join(character.get("identity_rules", []))
     code = int(weather["weather_code"])
     additions = "。".join(plan["weather_additions"]) or "特別な天候小物は不要"
     constraints = "。".join(config["generation_constraints"])
@@ -104,7 +106,9 @@ def make_prompt(config: dict, weather: dict) -> str:
             "Use case: illustration-story",
             "Asset type: 毎朝LINEで送る天気カードの人物背景画像",
             f"Primary request: {character['name']}が今日の天気に合う服装で出かける1枚絵",
+            f"Input images: {character['reference_image']} を人物同一性の基準画像として使用",
             f"Subject: {character['appearance']}",
+            f"Identity preservation: {identity_rules}",
             f"Style/medium: {character['image_style']}",
             f"Date/event: {plan['date']}、{event_line}",
             f"Weather context: {WEATHER_LABELS.get(code, '天気')}、最高{weather['temperature_2m_max']}℃、最低{weather['temperature_2m_min']}℃、降水確率{weather.get('precipitation_probability_max', 0)}%",
@@ -124,6 +128,12 @@ def main() -> None:
     parser.add_argument("--plan-json", action="store_true")
     args = parser.parse_args()
     config = load_config(args.config)
+    reference_path = Path(config["character"]["reference_image"])
+    if not reference_path.exists():
+        print(
+            f"注意: 基準画像がありません: {reference_path}。画像生成前に配置してください。",
+            file=sys.stderr,
+        )
     if args.weather_json:
         with args.weather_json.open("r", encoding="utf-8") as source:
             weather = json.load(source)

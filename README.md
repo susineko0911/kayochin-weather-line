@@ -22,6 +22,14 @@ python outfit_prompt.py --plan-json
 
 毎朝のCodex画像生成では `python outfit_prompt.py` の結果を画像生成指示として使い、生成画像を `weather_card.py --outfit <画像パス>` に渡します。
 
+## かよちんの見た目を固定する
+
+基準画像を次の場所へ保存します。
+
+`assets/reference/kayochin_reference.png`
+
+この画像はGitの対象外なので、公開リポジトリへは送られません。画像生成時は基準画像を参照し、顔立ち・髪型・髪色・目の色を維持して、服装・持ち物・背景だけを変更します。詳しくは [`assets/reference/README.md`](assets/reference/README.md) を参照してください。
+
 ## 費用
 
 - 天気: Open-Meteo（個人・非商用、APIキー不要）

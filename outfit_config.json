@@ -2,7 +2,13 @@
   "character": {
     "name": "かよちん",
     "appearance": "明るく優しい雰囲気の女の子。毎日同じ顔立ち、髪型、髪色を保つ",
-    "image_style": "清潔感のある高品質なアニメ風イラスト。全身が見える自然な立ち姿"
+    "image_style": "清潔感のある高品質なアニメ風イラスト。全身が見える自然な立ち姿",
+    "reference_image": "assets/reference/kayochin_reference.png",
+    "identity_rules": [
+      "参照画像と同じ顔立ち、髪型、髪色、目の色を保つ",
+      "年齢感、体格、顔の輪郭を変えない",
+      "服装、持ち物、背景だけをその日の条件に合わせて変更する"
+    ]
   },
   "seasons": [
     {

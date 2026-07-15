@@ -2,3 +2,5 @@ __pycache__/
 .env
 public/*.png
 !public/.gitkeep
+assets/reference/*
+!assets/reference/README.md
